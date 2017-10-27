@@ -7,6 +7,7 @@
 #include <ESP8266WiFi.h> // https://github.com/esp8266/Arduino
 #include <ESP8266mDNS.h>
 #include <Ticker.h>
+#include <ESPAsyncWebServer.h> // https://github.com/me-no-dev/ESPAsyncWebServer
 
 const uint8_t RELAY = 13; // 低电平触发继电器
 const uint8_t TOUCH = 14; // TTP223 触发按键
@@ -27,12 +28,13 @@ void setup() {
   Serial.println(F("\n\n"));
   Serial.println(F("Sketch start"));
 
-  wifi_setup();
-  mdns_setup();
   relay_setup();
   touch_setup();
   led_setup();
   button_setup();
+  mdns_setup();
+  wifi_setup();
+  server_setup();
 }
 
 // Arduino 主循环
@@ -65,8 +67,8 @@ static void relay_setup()
 static void relay_event(Event e)
 {
   if (e == EVENT_TOGGLE) {
-      Serial.println(F("Relay toggle"));
-      e = (digitalRead(RELAY) == LOW) ? EVENT_OFF : EVENT_ON;
+    Serial.println(F("Relay toggle"));
+    e = (digitalRead(RELAY) == LOW) ? EVENT_OFF : EVENT_ON;
   }
   switch (e) {
     case EVENT_ON:
@@ -338,3 +340,23 @@ static void mdns_event(const Event e)
   Serial.println(mdns_name);
 }
 
+// HTTP 服务
+
+static AsyncWebServer server(80);
+//static AsyncEventSource es("/events");
+
+// HTTP 服务配置
+void server_setup()
+{
+  server.on("/", HTTP_GET, server_root);
+  server.onNotFound([](AsyncWebServerRequest * request) {
+    request->send(404);
+  });
+  server.begin();
+  Serial.println(F("Server start"));
+}
+
+static void server_root(AsyncWebServerRequest *request)
+{
+  request->send(200, F("text/plain"), F("Hello Switch"));
+}
