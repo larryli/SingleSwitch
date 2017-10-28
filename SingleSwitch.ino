@@ -88,14 +88,11 @@ static void relay_event(Event e)
 static void touch_setup()
 {
   pinMode(TOUCH, INPUT);
-  attachInterrupt(digitalPinToInterrupt(TOUCH), touch_push, RISING);
-}
-
-// 按下触发继电器切换事件
-static void touch_push()
-{
-  Serial.println(F("Touch pushed"));
-  event(EVENT_TOGGLE);
+  // 按下触发继电器切换事件
+  attachInterrupt(digitalPinToInterrupt(TOUCH), [](){
+    Serial.println(F("Touch pushed"));
+    event(EVENT_TOGGLE);
+  }, RISING);
 }
 
 // Led 指示灯显示
@@ -117,7 +114,10 @@ static void led_event(const Event e)
   switch (e) {
     case EVENT_CONNECTING: // 正在联网，绿灯闪
       digitalWrite(YELLOW_LED, LOW);
-      led_ticker.attach_ms(500, led_flip, GREEN_LED);
+      // 切换指示灯亮灭
+      led_ticker.attach_ms(500, [](){
+        digitalWrite(GREEN_LED, (digitalRead(GREEN_LED) == LOW) ? HIGH : LOW);
+      });
       return;
     case EVENT_CONNECTED: // 联网正常，绿灯亮
       led_ticker.detach();
@@ -131,15 +131,12 @@ static void led_event(const Event e)
       return;
     case EVENT_CONFIG: // 配网状态，黄灯闪
       digitalWrite(GREEN_LED, LOW);
-      led_ticker.attach_ms(500, led_flip, YELLOW_LED);
+      // 切换指示灯亮灭
+      led_ticker.attach_ms(500, [](){
+        digitalWrite(YELLOW_LED, (digitalRead(YELLOW_LED) == LOW) ? HIGH : LOW);
+      });
       return;
   }
-}
-
-// 切换指示灯亮灭
-static void led_flip(const uint8_t led)
-{
-  digitalWrite(led, (digitalRead(led) == LOW) ? HIGH : LOW);
 }
 
 // Config button 配网按键
@@ -150,7 +147,21 @@ static bool button_configging = false;
 static void button_setup()
 {
   pinMode(CONFIG_BUTTON, INPUT);
-  attachInterrupt(digitalPinToInterrupt(CONFIG_BUTTON), button_push, RISING);
+  // 按键处理，去抖动，根据是否在配网开启配网或取消配网
+  attachInterrupt(digitalPinToInterrupt(CONFIG_BUTTON), [](){
+    static uint32_t last = 0;
+    uint32_t now = millis();
+
+    if (now > last + 200) {
+      last = now;
+      Serial.println(F("Set button pushed"));
+      if (button_configging) {
+        event(EVENT_CANCEL);
+      } else {
+        event(EVENT_CONFIG);
+      }
+    }
+  }, RISING);
 }
 
 // 配网按键事件处理，判断是否在配网
@@ -164,23 +175,6 @@ static void button_event(const Event e)
     case EVENT_CANCEL:
       button_configging = false;
       break;
-  }
-}
-
-// 按键处理，去抖动，根据是否在配网开启配网或取消配网
-static void button_push()
-{
-  static uint32_t last = 0;
-  uint32_t now = millis();
-
-  if (now > last + 200) {
-    last = now;
-    Serial.println(F("Set button pushed"));
-    if (button_configging) {
-      event(EVENT_CANCEL);
-    } else {
-      event(EVENT_CONFIG);
-    }
   }
 }
 
