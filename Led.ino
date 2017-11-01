@@ -8,7 +8,7 @@ static void led_setup()
   pinMode(YELLOW_LED, OUTPUT);
   pinMode(GREEN_LED, OUTPUT);
   digitalWrite(YELLOW_LED, LOW);
-  digitalWrite(GREEN_LED, HIGH); // 黄灯在启动时会预先点亮
+  digitalWrite(GREEN_LED, HIGH); // 绿灯在启动时会预先点亮
 }
 
 // 处理指示灯事件
