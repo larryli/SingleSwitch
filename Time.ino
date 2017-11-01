@@ -23,11 +23,12 @@ static void time_tick()
 
 static void time_event(const Event e)
 {
-  if (e != EVENT_CONNECTED) {
+  long t = (long)time(nullptr);
+
+  if (t > 0 || e != EVENT_CONNECTED) {
     return;
   }
   Serial.println(F("Time start"));
-  time_ticker.detach();
   configTime(8 * 3600, 0, "pool.ntp.org", "time.nist.gov");
   time_ticker.attach_ms(1000, time_tick);
 }
