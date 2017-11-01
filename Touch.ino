@@ -10,5 +10,3 @@ static void touch_setup()
     event(EVENT_TOGGLE);
   }, RISING);
 }
-
-

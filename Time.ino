@@ -11,7 +11,7 @@ static void time_tick()
     long m = t / 60;
 
     if (m != last) {
-      Serial.print("Time: ");
+      Serial.print(F("Time: "));
       Serial.print(t);
       Serial.print(" ");
       Serial.println(ctime(&t));
@@ -26,7 +26,7 @@ static void time_event(const Event e)
   if (e != EVENT_CONNECTED) {
     return;
   }
-  Serial.println("Time start");
+  Serial.println(F("Time start"));
   time_ticker.detach();
   configTime(8 * 3600, 0, "pool.ntp.org", "time.nist.gov");
   time_ticker.attach_ms(1000, time_tick);

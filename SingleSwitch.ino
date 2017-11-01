@@ -30,7 +30,7 @@ typedef enum {
 // Arduino 入口
 void setup() {
   Serial.begin(115200);
-  Serial.println(F("\n\n"));
+  Serial.println(F("\r\n"));
   Serial.println(F("Sketch start"));
   
   relay_setup();

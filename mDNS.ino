@@ -7,7 +7,7 @@ static void mdns_setup()
 {
   String mac = WiFi.macAddress();
 
-  mdns_name = "SWITCH_" + mac.substring(9, 11) + mac.substring(12, 14) + mac.substring(15, 17);
+  mdns_name = "SISW_" + mac.substring(9, 11) + mac.substring(12, 14) + mac.substring(15, 17);
   mdns_name.toUpperCase();
   mdns_state = false;
 }
@@ -28,7 +28,7 @@ static void mdns_event(const Event e)
     return;
   }
   MDNS.addService(F("http"), F("tcp"), 80);
-  MDNS.addService(F("SWITCH_HTTP"), F("tcp"), 80);
+  MDNS.addService(F("SISW_HTTP"), F("tcp"), 80);
   Serial.print(F("mDNS success: "));
   Serial.println(mdns_name);
 }
