@@ -9,6 +9,7 @@
 #include <time.h>
 #include <Ticker.h>
 #include <ESPAsyncWebServer.h> // https://github.com/me-no-dev/ESPAsyncWebServer
+#include "FlashEEPROM.h"
 
 extern "C" {
   #include <gpio.h>
