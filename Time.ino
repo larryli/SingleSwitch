@@ -17,9 +17,8 @@ static void time_tick()
       // 此时应抛弃修正偏差的中断时间数据
       // 注：如果取到的是 08:02:01 则不影响处理
       Serial.print(F("Time: "));
-      Serial.print(t);
-      Serial.print(" ");
       Serial.println(ctime(&t));
+      task_time(localtime(&t)); // 需要传参，不使用事件机制
       last = m;
     }
     // 每分钟修正本地与网络时间的偏差
@@ -29,12 +28,26 @@ static void time_tick()
 
 static void time_event(const Event e)
 {
-  long t = (long)time(nullptr);
+  long t;
 
-  if (t > 0 || e != EVENT_CONNECTED) {
-    return;
+  switch (e) {
+    case EVENT_WIFI_CONNECTED:
+      t = (long)time(nullptr);
+      if (t > 0) {
+        return;
+      }
+      Serial.println(F("Time start"));
+      time_config();
+      time_ticker.attach_ms(500, time_tick);
+      break;
+    case EVENT_CONFIG_UPDATE:
+      Serial.println(F("Time update"));
+      time_config();
+      break;
   }
-  Serial.println(F("Time start"));
-  configTime(8 * 3600, 0, "cn.ntp.org.cn", "pool.ntp.org", "time.nist.gov");
-  time_ticker.attach_ms(1000, time_tick);
+}
+
+static void time_config()
+{
+  configTime(config.time_zone * 60, 0, config.time_server1, config.time_server2, "time.nist.gov"); // "cn.ntp.org.cn", "pool.ntp.org"
 }

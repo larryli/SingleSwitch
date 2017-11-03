@@ -7,6 +7,6 @@ static void touch_setup()
   // 按下触发继电器切换事件
   attachInterrupt(digitalPinToInterrupt(TOUCH), [](){
     Serial.println(F("Touch pushed"));
-    event(EVENT_TOGGLE);
+    event(EVENT_RELAY_TOGGLE);
   }, RISING);
 }

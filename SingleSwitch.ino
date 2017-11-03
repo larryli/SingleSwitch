@@ -6,6 +6,7 @@
 
 #include <ESP8266WiFi.h> // https://github.com/esp8266/Arduino
 #include <ESP8266mDNS.h>
+#include <pgmspace.h>
 #include <time.h>
 #include <Ticker.h>
 #include <ESPAsyncWebServer.h> // https://github.com/me-no-dev/ESPAsyncWebServer
@@ -21,11 +22,18 @@ const uint8_t CONFIG_BUTTON = 4; // 轻触按键，配网，取消配网
 const uint8_t YELLOW_LED = 12;  // 黄色 LED，网络故障常亮，配网闪烁
 const uint8_t GREEN_LED = 5; // 绿色 LED，网络正常常亮，连网闪烁
 
+// 模拟 EEPROM 保存数据的 Flash 扇区，负数表示从 FS 结尾向前倒数
+#define EEPROM_RELAY -2
+#define EEPROM_CONFIG -4
+#define EEPROM_TASK -6
+
 // 事件常量
 typedef enum {
-  EVENT_CONNECTING, EVENT_CONNECTED, EVENT_FAILED, EVENT_DISCONNECTED, // 网络连接事件
-  EVENT_CONFIG, EVENT_RECEIVED, EVENT_CANCEL, // 配网事件
-  EVENT_ON, EVENT_OFF, EVENT_TOGGLE, // 继电器操作事件
+  EVENT_WIFI_CONNECTING, EVENT_WIFI_CONNECTED, EVENT_WIFI_FAILED, EVENT_WIFI_DISCONNECTED, // 网络连接事件
+  EVENT_SMART_CONFIG, EVENT_SMART_RECEIVED, EVENT_SMART_CANCEL, // 配网事件
+  EVENT_RELAY_ON, EVENT_RELAY_OFF, EVENT_RELAY_TOGGLE, EVENT_RELAY_UPDATE, // 继电器操作事件
+  EVENT_CONFIG_UPDATE, // 配置更新
+  EVENT_TASK_UPDATE, // 任务更新
 } Event;
 
 // Arduino 入口
@@ -33,8 +41,10 @@ void setup() {
   Serial.begin(115200);
   Serial.println(F("\r\n"));
   Serial.println(F("Sketch start"));
-  
+
+  config_setup();
   relay_setup();
+  task_setup();
   touch_setup();
   led_setup();
   button_setup();
@@ -60,8 +70,9 @@ void loop() {
 static void event(const Event e)
 {
   relay_event(e);
-  wifi_event(e);
   mdns_event(e);
+  wifi_event(e);
+  config_event(e);
   time_event(e);
   led_event(e);
   button_event(e);
