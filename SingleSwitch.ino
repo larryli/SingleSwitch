@@ -10,6 +10,7 @@
 #include <time.h>
 #include <Ticker.h>
 #include <ESPAsyncWebServer.h> // https://github.com/me-no-dev/ESPAsyncWebServer
+#include <ArduinoJson.h> // https://github.com/bblanchon/ArduinoJson/
 #include "FlashEEPROM.h"
 
 extern "C" {

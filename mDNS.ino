@@ -17,22 +17,22 @@ static void mdns_event(const Event e)
       if (mdns_state) {
         return;
       }
-      mdns_state = MDNS.begin(config.mdns_name);
+      mdns_state = MDNS.begin(config.device_name);
       if (!mdns_state) {
         Serial.println(F("mDNS error"));
         return;
       }
       Serial.print(F("mDNS success: "));
-      Serial.println(config.mdns_name);
+      Serial.println(config.device_name);
       break;
     case EVENT_CONFIG_UPDATE:
-      mdns_state = MDNS.begin(config.mdns_name);
+      mdns_state = MDNS.begin(config.device_name);
       if (!mdns_state) {
         Serial.println(F("mDNS error"));
         return;
       }
       Serial.print(F("mDNS update: "));
-      Serial.println(config.mdns_name);
+      Serial.println(config.device_name);
       break;
   }
 }

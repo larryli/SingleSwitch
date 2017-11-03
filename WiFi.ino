@@ -10,7 +10,6 @@ typedef enum {
 
 static WifiState wifi_state; // 是否在配网
 static uint8_t wifi_retry;
-static String mdns_name;
 
 #define WIFI_MAXRETRY 3
 
@@ -21,7 +20,7 @@ static void wifi_setup()
   WiFi.setAutoConnect(true);
   WiFi.setAutoReconnect(true);
   WiFi.persistent(false);
-  WiFi.hostname(config.mdns_name);
+  WiFi.hostname(config.device_name);
   wifi_retry = 0;
   wifi_state = WIFI_CONNECTING;
   if (WiFi.SSID() == "") {
@@ -117,7 +116,7 @@ static void wifi_event(const Event e)
       wifi_retry = 0;
       break;
     case EVENT_CONFIG_UPDATE: // 更新配置
-      WiFi.hostname(config.mdns_name);
+      WiFi.hostname(config.device_name);
       break;
   }
 }
