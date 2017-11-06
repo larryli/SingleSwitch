@@ -37,6 +37,9 @@ typedef enum {
   EVENT_TASK_UPDATE, // 任务更新
 } Event;
 
+// API
+typedef void(*ApiHandler)(AsyncWebServerRequest *request, AsyncResponseStream *response, JsonObject &root);
+
 // Arduino 入口
 void setup() {
   Serial.begin(115200);

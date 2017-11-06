@@ -4,44 +4,50 @@
 
 static void api_setup()
 {
-  server.on("/api/switch", HTTP_GET, api_get_switch);
-  server.on("/api/switch", HTTP_POST | HTTP_PUT, api_put_switch);
-  server.on("/api/setting", HTTP_GET, api_get_setting);
-  server.on("/api/setting", HTTP_POST | HTTP_PUT, api_put_setting);
-  server.on("/api/task", HTTP_GET, api_get_task);
-  server.on("/api/task", HTTP_POST, [](AsyncWebServerRequest *request) {
+  api_on(&server, "/api/switch", HTTP_GET, api_get_switch);
+  api_on(&server, "/api/switch", HTTP_POST | HTTP_PUT, api_put_switch);
+  api_on(&server, "/api/setting", HTTP_GET, api_get_setting);
+  api_on(&server, "/api/setting", HTTP_POST | HTTP_PUT, api_put_setting);
+  api_on(&server, "/api/task", HTTP_GET, api_get_task);
+  api_on(&server, "/api/task", HTTP_POST, [](AsyncWebServerRequest * request, AsyncResponseStream *response, JsonObject &root) {
     if (request->hasArg(F("id"))) {
       if (request->hasArg(F("_method")) && request->arg(F("_method")).equalsIgnoreCase(F("DELETE"))) {
-        api_delete_task(request);
+        api_delete_task(request, response, root);
       } else {
-        api_put_task(request);
+        api_put_task(request, response, root);
       }
     } else {
-      api_post_task(request);
+      api_post_task(request, response, root);
     }
   });
-  server.on("/api/task", HTTP_PUT, api_put_task); // 与 POST /api/task?id=0 相同
-  server.on("/api/task", HTTP_DELETE, api_delete_task); // 与 POST /api/task?id=0&_method=delete 相同
+  api_on(&server, "/api/task", HTTP_PUT, api_put_task); // 与 POST /api/task?id=0 相同
+  api_on(&server, "/api/task", HTTP_DELETE, api_delete_task); // 与 POST /api/task?id=0&_method=delete 相同
 }
 
-static void api_get_switch(AsyncWebServerRequest *request)
+static AsyncCallbackWebHandler& api_on(AsyncWebServer *server, const char* uri, WebRequestMethodComposite method, ApiHandler handler)
 {
-  AsyncResponseStream *response = request->beginResponseStream(F("text/json"));
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject &root = jsonBuffer.createObject();
-  
+  return server->on(uri, method, [&](AsyncWebServerRequest * request) {
+    AsyncResponseStream *response = request->beginResponseStream(F("text/json"));
+    DynamicJsonBuffer jsonBuffer;
+    JsonObject &root = jsonBuffer.createObject();
+
+    handler(request, response, root);
+    if (root["ok"] == 0) {
+      response->setCode(422);
+    }
+    root.printTo(*response);
+    request->send(response);
+  });
+}
+
+static void api_get_switch(AsyncWebServerRequest *request, AsyncResponseStream *response, JsonObject &root)
+{
   root["ok"] = 1;
   root["switch"] = (bool)(digitalRead(RELAY) == LOW);
-  root.printTo(*response);
-  request->send(response);
 }
 
-static void api_put_switch(AsyncWebServerRequest *request)
+static void api_put_switch(AsyncWebServerRequest *request, AsyncResponseStream *response, JsonObject &root)
 {
-  AsyncResponseStream *response = request->beginResponseStream(F("text/json"));
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject &root = jsonBuffer.createObject();
-
   if (request->hasArg("switch")) {
     String arg = request->arg("switch");
 
@@ -50,16 +56,10 @@ static void api_put_switch(AsyncWebServerRequest *request)
     event(EVENT_RELAY_TOGGLE);
   }
   root["ok"] = 1;
-  root.printTo(*response);
-  request->send(response);
 }
 
-static void api_get_setting(AsyncWebServerRequest *request)
+static void api_get_setting(AsyncWebServerRequest *request, AsyncResponseStream *response, JsonObject &root)
 {
-  AsyncResponseStream *response = request->beginResponseStream(F("text/json"));
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject &root = jsonBuffer.createObject();
-
   root["ok"] = 1;
   root["device_name"] = config.device_name;
   root["relay_keep"] = config.relay_keep;
@@ -68,13 +68,10 @@ static void api_get_setting(AsyncWebServerRequest *request)
   root["time_server1"] = config.time_server1;
   root["time_server2"] = config.time_server2;
   root["time_zone"] = config.time_zone;
-  root.printTo(*response);
-  request->send(response);
 }
 
-static void api_put_setting(AsyncWebServerRequest *request)
+static void api_put_setting(AsyncWebServerRequest *request, AsyncResponseStream *response, JsonObject &root)
 {
-  AsyncResponseStream *response = request->beginResponseStream(F("text/json"));
   String device_name = request->arg(F("device_name"));
   String relay_keep = request->arg(F("relay_keep"));
   String relay_auto_off = request->arg(F("relay_auto_off"));
@@ -82,8 +79,6 @@ static void api_put_setting(AsyncWebServerRequest *request)
   String time_server1 = request->arg(F("time_server1"));
   String time_server2 = request->arg("time_server2");
   String time_zone = request->arg("time_zone");
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject &root = jsonBuffer.createObject();
 
   if (device_name == nullptr) {
     root["message"] = F("没有填写设备名称");
@@ -103,8 +98,6 @@ static void api_put_setting(AsyncWebServerRequest *request)
     switch (config_update(device_name, relay_keep.toInt(), relay_auto_off.toInt(), led_auto_off.toInt(), time_server1, time_server2, time_zone.toInt())) {
       case 0:
         root["ok"] = 1;
-        root.printTo(*response);
-        request->send(response);
         return;
       case 1:
         root["message"] = F("设备名称太长");
@@ -136,26 +129,67 @@ static void api_put_setting(AsyncWebServerRequest *request)
       case 14:
         root["message"] = F("时区参数错误，必须在 UTC -12:00 到 UTC 14:00 范围内");
         break;
+      default:
+        root["message"] = F("未知错误，请更新固件");
+        break;
     }
   }
   root["ok"] = 0;
-  root.printTo(*response);
-  response->setCode(422);
-  request->send(response);
 }
 
-static void api_get_task(AsyncWebServerRequest *request)
+static void api_get_task(AsyncWebServerRequest *request, AsyncResponseStream *response, JsonObject &root)
 {
 }
 
-static void api_post_task(AsyncWebServerRequest *request)
+static void api_post_task(AsyncWebServerRequest *request, AsyncResponseStream *response, JsonObject &root)
 {
 }
 
-static void api_put_task(AsyncWebServerRequest *request)
+static void api_put_task(AsyncWebServerRequest *request, AsyncResponseStream *response, JsonObject &root)
 {
+  String id = request->arg(F("id"));
+  String day = request->arg(F("day"));
+  String hour = request->arg(F("hour"));
+  String minute = request->arg(F("minute"));
+  String state = request->arg(F("state"));
+  String relay = request->arg(F("relay"));
+
+  if (id == nullptr) {
+    root["message"] = F("没有提供任务 ID");
+  } else {
+    switch (task_delete(id.toInt())) {
+      case 0:
+        root["ok"] = 1;
+        return;
+      case 5:
+        root["message"] = F("任务号不存在");
+        break;
+      default:
+        root["message"] = F("未知错误，请更新固件");
+        break;
+    }
+  }
+  root["ok"] = 0;
 }
 
-static void api_delete_task(AsyncWebServerRequest *request)
+static void api_delete_task(AsyncWebServerRequest *request, AsyncResponseStream *response, JsonObject &root)
 {
+  String id = request->arg(F("id"));
+
+  if (id == nullptr) {
+    root["message"] = F("没有提供任务 ID");
+  } else {
+    switch (task_delete(id.toInt())) {
+      case 0:
+        root["ok"] = 1;
+        return;
+      case 5:
+        root["message"] = F("任务号不存在");
+        break;
+      default:
+        root["message"] = F("未知错误，请更新固件");
+        break;
+    }
+  }
+  root["ok"] = 0;
 }
