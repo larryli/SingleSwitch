@@ -9,8 +9,7 @@
 #include <pgmspace.h>
 #include <time.h>
 #include <Ticker.h>
-#include <ESPAsyncWebServer.h> // https://github.com/me-no-dev/ESPAsyncWebServer
-#include <ArduinoJson.h> // https://github.com/bblanchon/ArduinoJson/
+#include "JsonServer.h"
 #include "FlashEEPROM.h"
 
 extern "C" {
@@ -36,9 +35,6 @@ typedef enum {
   EVENT_CONFIG_UPDATE, // 配置更新
   EVENT_TASK_UPDATE, // 任务更新
 } Event;
-
-// API
-typedef void(*ApiHandler)(AsyncWebServerRequest *request, AsyncResponseStream *response, JsonObject &root);
 
 // Arduino 入口
 void setup() {

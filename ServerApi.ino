@@ -4,49 +4,33 @@
 
 static void api_setup()
 {
-  api_on(&server, "/api/switch", HTTP_GET, api_get_switch);
-  api_on(&server, "/api/switch", HTTP_POST | HTTP_PUT, api_put_switch);
-  api_on(&server, "/api/setting", HTTP_GET, api_get_setting);
-  api_on(&server, "/api/setting", HTTP_POST | HTTP_PUT, api_put_setting);
-  api_on(&server, "/api/task", HTTP_GET, api_get_task);
-  api_on(&server, "/api/task", HTTP_POST, [](AsyncWebServerRequest * request, AsyncResponseStream *response, JsonObject &root) {
+  server.onJson("/api/switch", HTTP_GET, api_get_switch);
+  server.onJson("/api/switch", HTTP_POST | HTTP_PUT, api_put_switch);
+  server.onJson("/api/setting", HTTP_GET, api_get_setting);
+  server.onJson("/api/setting", HTTP_POST | HTTP_PUT, api_put_setting);
+  server.onJson("/api/task", HTTP_GET, api_get_task);
+  server.onJson("/api/task", HTTP_POST, [](AsyncWebServerRequest * request, JsonObject &root) {
     if (request->hasArg(F("id"))) {
       if (request->hasArg(F("_method")) && request->arg(F("_method")).equalsIgnoreCase(F("DELETE"))) {
-        api_delete_task(request, response, root);
+        api_delete_task(request, root);
       } else {
-        api_put_task(request, response, root);
+        api_put_task(request, root);
       }
     } else {
-      api_post_task(request, response, root);
+      api_post_task(request, root);
     }
   });
-  api_on(&server, "/api/task", HTTP_PUT, api_put_task); // 与 POST /api/task?id=0 相同
-  api_on(&server, "/api/task", HTTP_DELETE, api_delete_task); // 与 POST /api/task?id=0&_method=delete 相同
+  server.onJson("/api/task", HTTP_PUT, api_put_task); // 与 POST /api/task?id=0 相同
+  server.onJson("/api/task", HTTP_DELETE, api_delete_task); // 与 POST /api/task?id=0&_method=delete 相同
 }
 
-static AsyncCallbackWebHandler& api_on(AsyncWebServer *server, const char* uri, WebRequestMethodComposite method, ApiHandler handler)
-{
-  return server->on(uri, method, [&](AsyncWebServerRequest * request) {
-    AsyncResponseStream *response = request->beginResponseStream(F("text/json"));
-    DynamicJsonBuffer jsonBuffer;
-    JsonObject &root = jsonBuffer.createObject();
-
-    handler(request, response, root);
-    if (root["ok"] == 0) {
-      response->setCode(422);
-    }
-    root.printTo(*response);
-    request->send(response);
-  });
-}
-
-static void api_get_switch(AsyncWebServerRequest *request, AsyncResponseStream *response, JsonObject &root)
+static void api_get_switch(AsyncWebServerRequest *request, JsonObject &root)
 {
   root["ok"] = 1;
   root["switch"] = (bool)(digitalRead(RELAY) == LOW);
 }
 
-static void api_put_switch(AsyncWebServerRequest *request, AsyncResponseStream *response, JsonObject &root)
+static void api_put_switch(AsyncWebServerRequest *request, JsonObject &root)
 {
   if (request->hasArg("switch")) {
     String arg = request->arg("switch");
@@ -58,7 +42,7 @@ static void api_put_switch(AsyncWebServerRequest *request, AsyncResponseStream *
   root["ok"] = 1;
 }
 
-static void api_get_setting(AsyncWebServerRequest *request, AsyncResponseStream *response, JsonObject &root)
+static void api_get_setting(AsyncWebServerRequest *request, JsonObject &root)
 {
   root["ok"] = 1;
   root["device_name"] = config.device_name;
@@ -70,7 +54,7 @@ static void api_get_setting(AsyncWebServerRequest *request, AsyncResponseStream 
   root["time_zone"] = config.time_zone;
 }
 
-static void api_put_setting(AsyncWebServerRequest *request, AsyncResponseStream *response, JsonObject &root)
+static void api_put_setting(AsyncWebServerRequest *request, JsonObject &root)
 {
   String device_name = request->arg(F("device_name"));
   String relay_keep = request->arg(F("relay_keep"));
@@ -137,11 +121,11 @@ static void api_put_setting(AsyncWebServerRequest *request, AsyncResponseStream 
   root["ok"] = 0;
 }
 
-static void api_get_task(AsyncWebServerRequest *request, AsyncResponseStream *response, JsonObject &root)
+static void api_get_task(AsyncWebServerRequest *request, JsonObject &root)
 {
 }
 
-static void api_post_task(AsyncWebServerRequest *request, AsyncResponseStream *response, JsonObject &root)
+static void api_post_task(AsyncWebServerRequest *request, JsonObject &root)
 {
   String day = request->arg(F("day"));
   String hour = request->arg(F("hour"));
@@ -187,7 +171,7 @@ static void api_post_task(AsyncWebServerRequest *request, AsyncResponseStream *r
   root["ok"] = 0;
 }
 
-static void api_put_task(AsyncWebServerRequest *request, AsyncResponseStream *response, JsonObject &root)
+static void api_put_task(AsyncWebServerRequest *request, JsonObject &root)
 {
   String id = request->arg(F("id"));
   String day = request->arg(F("day"));
@@ -233,7 +217,7 @@ static void api_put_task(AsyncWebServerRequest *request, AsyncResponseStream *re
   root["ok"] = 0;
 }
 
-static void api_delete_task(AsyncWebServerRequest *request, AsyncResponseStream *response, JsonObject &root)
+static void api_delete_task(AsyncWebServerRequest *request, JsonObject &root)
 {
   String id = request->arg(F("id"));
 

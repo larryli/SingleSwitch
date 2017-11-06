@@ -3,8 +3,8 @@
 // author: Larry Li
 // email: larryli@qq.com
 
-#ifndef FLASH_EEPROM_h
-#define FLASH_EEPROM_h
+#ifndef FLASH_EEPROM_H
+#define FLASH_EEPROM_H
 
 #include <stddef.h>
 #include <stdint.h>

@@ -1,6 +1,6 @@
 // HTTP 服务
 
-static AsyncWebServer server(80);
+static JsonServer server(80);
 
 // HTTP 服务配置
 void server_setup()
