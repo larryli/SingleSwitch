@@ -143,6 +143,48 @@ static void api_get_task(AsyncWebServerRequest *request, AsyncResponseStream *re
 
 static void api_post_task(AsyncWebServerRequest *request, AsyncResponseStream *response, JsonObject &root)
 {
+  String day = request->arg(F("day"));
+  String hour = request->arg(F("hour"));
+  String minute = request->arg(F("minute"));
+  String state = request->arg(F("state"));
+  String relay = request->arg(F("relay"));
+
+  if (day == nullptr) {
+    root["message"] = F("没有选择天");
+  } else if (hour == nullptr) {
+    root["message"] = F("没有选择小时");
+  } else if (minute == nullptr) {
+    root["message"] = F("没有选择分钟");
+  } else if (state == nullptr) {
+    root["message"] = F("没有设置状态");
+  } else if (relay == nullptr) {
+    root["message"] = F("没有选择开关动作");
+  } else {
+    switch (task_insert(day.toInt(), hour.toInt(), minute.toInt(), state.toInt(), relay.toInt())) {
+      case 0:
+        root["ok"] = 1;
+        return;
+      case 1:
+        root["message"] = F("小时不对");
+        break;
+      case 2:
+        root["message"] = F("分钟不对");
+        break;
+      case 3:
+        root["message"] = F("已存在相同时间设置的任务");
+        break;
+      case 4:
+        root["message"] = F("任务数已满");
+        break;
+      case 5:
+        root["message"] = F("任务号不存在");
+        break;
+      default:
+        root["message"] = F("未知错误，请更新固件");
+        break;
+    }
+  }
+  root["ok"] = 0;
 }
 
 static void api_put_task(AsyncWebServerRequest *request, AsyncResponseStream *response, JsonObject &root)
@@ -156,11 +198,30 @@ static void api_put_task(AsyncWebServerRequest *request, AsyncResponseStream *re
 
   if (id == nullptr) {
     root["message"] = F("没有提供任务 ID");
+  } else if (day == nullptr) {
+    root["message"] = F("没有选择天");
+  } else if (hour == nullptr) {
+    root["message"] = F("没有选择小时");
+  } else if (minute == nullptr) {
+    root["message"] = F("没有选择分钟");
+  } else if (state == nullptr) {
+    root["message"] = F("没有设置状态");
+  } else if (relay == nullptr) {
+    root["message"] = F("没有选择开关动作");
   } else {
-    switch (task_delete(id.toInt())) {
+    switch (task_update(id.toInt(), day.toInt(), hour.toInt(), minute.toInt(), state.toInt(), relay.toInt())) {
       case 0:
         root["ok"] = 1;
         return;
+      case 1:
+        root["message"] = F("小时不对");
+        break;
+      case 2:
+        root["message"] = F("分钟不对");
+        break;
+      case 3:
+        root["message"] = F("已存在相同时间设置的任务");
+        break;
       case 5:
         root["message"] = F("任务号不存在");
         break;
