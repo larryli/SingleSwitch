@@ -48,7 +48,7 @@ static void led_event(const Event e)
     case EVENT_RELAY_UPDATE: // 反馈操作，绿灯闪一下；只在联网正常时处理
       if (led_state) {
         digitalWrite(GREEN_LED, LOW);
-        led_ticker.once_ms(500, [](){
+        led_ticker.once_ms(150, [](){
           led_green();
         });
       }
