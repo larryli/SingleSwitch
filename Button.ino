@@ -5,13 +5,13 @@ static bool button_configging = false;
 // 配网按键配置
 static void button_setup()
 {
-  pinMode(CONFIG_BUTTON, INPUT);
-  // 按键处理，去抖动，根据是否在配网开启配网或取消配网
+  pinMode(CONFIG_BUTTON, INPUT_PULLUP);
+  // 按键处理，去抖动，根据是否在配网开启配网或取消配网；处理 millis 翻转
   attachInterrupt(digitalPinToInterrupt(CONFIG_BUTTON), [](){
     static uint32_t last = 0;
     uint32_t now = millis();
 
-    if (now > last + 200) {
+    if (last > now || now > last + 200) {
       last = now;
       Serial.println(F("Set button pushed"));
       if (button_configging) {
@@ -20,7 +20,7 @@ static void button_setup()
         event(EVENT_SMART_CONFIG);
       }
     }
-  }, RISING);
+  }, FALLING);
 }
 
 // 配网按键事件处理，判断是否在配网

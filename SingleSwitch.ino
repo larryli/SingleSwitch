@@ -17,10 +17,10 @@ extern "C" {
 }
 
 const uint8_t RELAY = 13; // 低电平触发继电器
-const uint8_t TOUCH = 14; // TTP223 触发按键
+const uint8_t TOUCH = 12; // TTP223 触发按键
 const uint8_t CONFIG_BUTTON = 4; // 轻触按键，配网，取消配网
-const uint8_t YELLOW_LED = 12;  // 黄色 LED，网络故障常亮，配网闪烁
-const uint8_t GREEN_LED = 5; // 绿色 LED，网络正常常亮，连网闪烁
+const uint8_t YELLOW_LED = 5;  // 黄色 LED，网络故障常亮，配网闪烁
+const uint8_t GREEN_LED = 14; // 绿色 LED，网络正常常亮，连网闪烁
 
 // 模拟 EEPROM 保存数据的 Flash 扇区，负数表示从 FS 结尾向前倒数
 #define EEPROM_RELAY -2
