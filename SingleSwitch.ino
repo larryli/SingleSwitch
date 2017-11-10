@@ -37,7 +37,8 @@ typedef enum {
 } Event;
 
 // Arduino 入口
-void setup() {
+void setup()
+{
   Serial.begin(115200);
   Serial.println(F("\r\n"));
   Serial.println(F("Sketch start"));
@@ -60,7 +61,8 @@ void setup() {
 }
 
 // Arduino 主循环
-void loop() {
+void loop()
+{
   if (wifi_loop()) {
     return;
   }
