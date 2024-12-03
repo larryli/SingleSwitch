@@ -6,12 +6,8 @@
 
 static const char *TAG = "app_main";
 
-static void button_single_click_cb(void *arg, void *usr_data)
-{
-    ESP_LOGI(TAG, "BUTTON_SINGLE_CLICK");
-}
-
 static led_indicator_handle_t led_handle = NULL;
+static int led_type = 0;
 
 #define LEDC
 
@@ -173,6 +169,18 @@ blink_step_t const *led_mode[] = {
 };
 #endif
 
+static void button_single_click_cb(void *arg, void *usr_data)
+{
+    led_indicator_stop(led_handle, led_type);
+    ESP_LOGI(TAG, "stop blink: %d", led_type);
+    led_type++;
+    if (led_type >= BLINK_MAX) {
+        led_type = 0;
+    }
+    led_indicator_start(led_handle, led_type);
+    ESP_LOGI(TAG, "start blink: %d", led_type);
+}
+
 void app_main(void)
 {
     ESP_LOGI(TAG, "start");
@@ -223,19 +231,13 @@ void app_main(void)
     };
 #endif
     led_handle = led_indicator_create(&config);
-    assert(led_handle != NULL);
+    if (NULL == led_handle) {
+        ESP_LOGE(TAG, "Led indicator create failed");
+    }
 #ifdef LEDC
     ledc_fade_func_install(0);
 #endif
 
-    while (1) {
-        for (int i = 0; i < BLINK_MAX; i++) {
-            led_indicator_start(led_handle, i);
-            ESP_LOGI(TAG, "start blink: %d", i);
-            vTaskDelay(4000 / portTICK_PERIOD_MS);
-            led_indicator_stop(led_handle, i);
-            ESP_LOGI(TAG, "stop blink: %d", i);
-            vTaskDelay(1000 / portTICK_PERIOD_MS);
-        }
-    }
+    led_indicator_start(led_handle, led_type);
+    ESP_LOGI(TAG, "start blink: %d", led_type);
 }
