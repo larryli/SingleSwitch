@@ -1,0 +1,38 @@
+menu "IoT Button"
+
+    config BUTTON_PERIOD_TIME_MS
+        int "BUTTON PERIOD TIME (MS)"
+        range 2 500
+        default 10
+        help
+            "Button scan interval"
+
+    config BUTTON_DEBOUNCE_TICKS
+        int "BUTTON DEBOUNCE TICKS"
+        range 1 7
+        default 2
+        help
+            "One CONFIG_BUTTON_DEBOUNCE_TICKS equal to CONFIG_BUTTON_PERIOD_TIME_MS"
+
+    config BUTTON_SHORT_PRESS_TIME_MS
+        int "BUTTON SHORT PRESS TIME (MS)"
+        range 50 800
+        default 180
+
+    config BUTTON_LONG_PRESS_TIME_MS
+        int "BUTTON LONG PRESS TIME (MS)"
+        range 500 5000
+        default 1500
+
+    config BUTTON_LONG_PRESS_TOLERANCE_MS
+        int "BUTTON LONG PRESS TOLERANCE TIME (MS)"
+        default 20
+
+    config BUTTON_SERIAL_TIME_MS
+        int "BUTTON SERIAL TIME (MS)"
+        range 2 1000
+        default 20
+        help
+            "Serial trigger interval"
+
+endmenu
