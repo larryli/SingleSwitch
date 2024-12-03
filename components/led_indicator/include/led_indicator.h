@@ -15,6 +15,7 @@ extern "C" {
 #include "esp_err.h"
 #include "led_gpio.h"
 #include "led_ledc.h"
+#include "led_rgb.h"
 #include "led_convert.h"
 #include "led_custom.h"
 
@@ -39,6 +40,10 @@ typedef enum {
     LED_BLINK_HOLD,        /*!< hold the on-off state */
     LED_BLINK_BREATHE,     /*!< breathe state */
     LED_BLINK_BRIGHTNESS,  /*!< set the brightness, it will transition from the old brightness to the new brightness */
+    LED_BLINK_RGB,         /*!< color change with R(0-255) G(0-255) B(0-255) */
+    LED_BLINK_RGB_RING,    /*!< Gradual color transition from old color to new color in a color ring */
+    LED_BLINK_HSV,         /*!< color change with H(0-360) S(0-255) V(0-255) */
+    LED_BLINK_HSV_RING,    /*!< Gradual color transition from old color to new color in a color ring */
     LED_BLINK_LOOP,        /*!< loop from first step */
 } blink_step_type_t;
 
@@ -59,6 +64,7 @@ typedef struct {
 typedef enum {
     LED_GPIO_MODE,         /*!< blink with max brightness */
     LED_LEDC_MODE,         /*!< blink with LEDC driver */
+    LED_RGB_MODE,          /*!< blink with RGB driver */
     LED_CUSTOM_MODE,       /*!< blink with custom driver */
 } led_indicator_mode_t;
 
@@ -71,6 +77,7 @@ typedef struct {
     union {
         led_indicator_gpio_config_t *led_indicator_gpio_config;       /*!< LED GPIO configuration */
         led_indicator_ledc_config_t *led_indicator_ledc_config;       /*!< LED LEDC configuration */
+        led_indicator_rgb_config_t *led_indicator_rgb_config;         /*!< LED RGB configuration */
         led_indicator_custom_config_t *led_indicator_custom_config;   /*!< LED custom configuration */
     }; /**< LED configuration */
     blink_step_t const **blink_lists;           /*!< user defined LED blink lists */
@@ -185,6 +192,69 @@ esp_err_t led_indicator_set_on_off(led_indicator_handle_t handle, bool on_off);
  *     - ESP_ERR_INVALID_ARG: Invalid parameter
  */
 esp_err_t led_indicator_set_brightness(led_indicator_handle_t handle, uint32_t brightness);
+
+/**
+ * @brief Get the HSV color of the LED indicator.
+ *
+ * @param handle LED indicator handle.
+ * @return HSV color value
+ *         H: 0-360, S: 0-255, V: 0-255
+ * @note Index settings are only supported for LED_RGB_MODE.
+ */
+uint32_t led_indicator_get_hsv(led_indicator_handle_t handle);
+
+/**
+ * @brief Set the HSV color for the LED indicator.
+ *
+ * @param handle LED indicator handle.
+ * @param ihsv_value HSV color value to set.
+ *       I: 0-126, set 127 to control all H: 0-360, S: 0-255, V: 0-255
+ * @note Index settings are only supported for LED_RGB_MODE.
+ * @return esp_err_t
+ *     - ESP_OK: Success
+ *     - ESP_FAIL: Failure
+ *     - ESP_ERR_INVALID_ARG: Invalid parameter
+ */
+esp_err_t led_indicator_set_hsv(led_indicator_handle_t handle, uint32_t ihsv_value);
+
+/**
+ * @brief Get the RGB color of the LED indicator.
+ *
+ * @param handle LED indicator handle.
+ * @return RGB color value (0xRRGGBB)
+ *         R: 0-255, G: 0-255, B: 0-255
+ * @note Index settings are only supported for LED_RGB_MODE.
+ */
+uint32_t led_indicator_get_rgb(led_indicator_handle_t handle);
+
+/**
+ * @brief Set the RGB color for the LED indicator.
+ *
+ * @param handle LED indicator handle.
+ * @param irgb_value RGB color value to set (0xRRGGBB).
+ *        I: 0-126, set 127 to control all R: 0-255, G: 0-255, B: 0-255
+ * @note Index settings are only supported for LED_RGB_MODE.
+ * @return esp_err_t
+ *     - ESP_OK: Success
+ *     - ESP_FAIL: Failure
+ *     - ESP_ERR_INVALID_ARG: Invalid parameter
+ */
+esp_err_t led_indicator_set_rgb(led_indicator_handle_t handle, uint32_t irgb_value);
+
+/**
+ * @brief Set the color temperature for the LED indicator.
+ *
+ * @param handle LED indicator handle.
+ * @param temperature Color temperature of LED (0xIITTTTTT)
+ *        I: 0-126, set 127 to control all, TTTTTT: 0-1000000
+
+ * @note Index settings are only supported for LED_RGB_MODE.
+ * @return esp_err_t
+ *     - ESP_OK: Success
+ *     - ESP_FAIL: Failure
+ *     - ESP_ERR_INVALID_ARG: Invalid parameter
+ */
+esp_err_t led_indicator_set_color_temperature(led_indicator_handle_t handle, const uint32_t temperature);
 
 #ifdef __cplusplus
 }
